@@ -321,7 +321,7 @@ body::after{
 .add-wrap:focus-within{border-color:rgba(201,168,76,0.4);border-style:solid;}
 .add-row{
   display:grid;
-  grid-template-columns:1fr 110px 110px 110px 90px;
+  grid-template-columns:1fr 110px 110px 90px;
   gap:0;align-items:stretch;
 }
 .add-in{
@@ -589,8 +589,8 @@ body::after{
   .summary{grid-template-columns:1fr 1fr;}
   .sum-cell:last-child{grid-column:1/-1;border-right:none;border-top:1px solid var(--border);}
   .tbl col.c-num{width:80px;}
-  .add-row{grid-template-columns:1fr 80px 80px;}
-  .add-in.hide-mobile,.tbl .hide-mobile{display:none;}
+  .add-row{grid-template-columns:1fr 80px 80px 70px;}
+  .tbl .hide-mobile{display:none;}
   .savings-top{flex-direction:column;align-items:flex-start;}
   .savings-input-wrap{width:100%;}
   .inst-row{grid-template-columns:18px 1fr 80px 36px;}
@@ -1077,8 +1077,8 @@ function renderSections() {
       return `<tr data-si="${si}" data-ii="${ii}">
         <td><input class="e-name" value="${esc(item.name)}" oninput="updateField(${si},${ii},'name',this.value)" title="Editar nome"/></td>
         <td class="r"><input class="e-num" type="number" value="${t || ''}" placeholder="0" oninput="updateField(${si},${ii},'total',this.value)" title="Valor total"/></td>
-        <td class="r hide-mobile"><input class="e-num" type="number" value="${p || ''}" placeholder="0" oninput="updateField(${si},${ii},'paid',this.value)" title="Valor pago"/></td>
-        <td class="r cell-due ${due > 0 ? 'v-due' : ''}" data-si="${si}" data-ii="${ii}">${fmt(due)}</td>
+        <td class="r"><input class="e-num" type="number" value="${p || ''}" placeholder="0" oninput="updateField(${si},${ii},'paid',this.value)" title="Valor pago"/></td>
+        <td class="r hide-mobile cell-due ${due > 0 ? 'v-due' : ''}" data-si="${si}" data-ii="${ii}">${fmt(due)}</td>
         <td class="cell-badge" style="text-align:center" data-si="${si}" data-ii="${ii}">${badge(t, p)}</td>
         <td><button class="btn-del" onclick="deleteItem(${si},${ii})" title="Remover item">×</button></td>
       </tr>`;
@@ -1106,16 +1106,16 @@ function renderSections() {
         <colgroup>
           <col class="c-name"/>
           <col class="c-num"/>
-          <col class="c-num hide-mobile"/>
           <col class="c-num"/>
+          <col class="c-num hide-mobile"/>
           <col class="c-badge"/>
           <col class="c-del"/>
         </colgroup>
         <thead><tr>
           <th>Item</th>
           <th class="r">Valor total</th>
-          <th class="r hide-mobile">Valor pago</th>
-          <th class="r">A pagar</th>
+          <th class="r">Valor pago</th>
+          <th class="r hide-mobile">A pagar</th>
           <th style="text-align:center">Status</th>
           <th></th>
         </tr></thead>
@@ -1124,8 +1124,8 @@ function renderSections() {
           <tr class="total-tr" data-si="${si}">
             <td>Total</td>
             <td class="r sec-total-val">${fmt(st)}</td>
-            <td class="r hide-mobile sec-paid-val" style="color:var(--green)!important">${fmt(sp)}</td>
-            <td class="r sec-due-val" style="color:var(--gold)!important">${fmt(Math.max(0, st - sp))}</td>
+            <td class="r sec-paid-val" style="color:var(--green)!important">${fmt(sp)}</td>
+            <td class="r hide-mobile sec-due-val" style="color:var(--gold)!important">${fmt(Math.max(0, st - sp))}</td>
             <td></td><td></td>
           </tr>
         </tbody>
@@ -1134,8 +1134,7 @@ function renderSections() {
         <div class="add-row">
           <input class="add-in" id="an${si}" placeholder="+ Nome do novo item..."/>
           <input class="add-in num" type="number" id="at${si}" placeholder="Total (R$)"/>
-          <input class="add-in num hide-mobile" type="number" id="ap${si}" placeholder="Pago (R$)"/>
-          <input class="add-in num hide-mobile" type="number" disabled style="opacity:0;pointer-events:none"/>
+          <input class="add-in num" type="number" id="ap${si}" placeholder="Pago (R$)"/>
           <button class="btn-add" onclick="addItem(${si})">+ Adicionar</button>
         </div>
       </div>
@@ -1158,7 +1157,7 @@ function updateRowInPlace(si, ii) {
   const dueCell = document.querySelector(`.cell-due[data-si="${si}"][data-ii="${ii}"]`);
   if (dueCell) {
     dueCell.textContent = fmt(due);
-    dueCell.className = `r cell-due${due > 0 ? ' v-due' : ''}`;
+    dueCell.className = `r hide-mobile cell-due${due > 0 ? ' v-due' : ''}`;
     dueCell.setAttribute('data-si', si);
     dueCell.setAttribute('data-ii', ii);
   }
