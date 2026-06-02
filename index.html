@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <style>
 :root{
   --bg:#1C2318;--bg2:#232C1F;--bg3:#2B3626;
@@ -584,6 +585,76 @@ body::after{
   vertical-align:middle;
 }
 
+/* ── LOGIN MODAL ── */
+.login-overlay{
+  position:fixed;inset:0;background:var(--bg);
+  z-index:2000;display:flex;align-items:center;justify-content:center;padding:1.5rem;
+}
+.login-overlay.hidden{display:none;}
+.login-box{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:20px;padding:2.5rem 2rem;max-width:400px;width:100%;
+  position:relative;overflow:hidden;
+}
+.login-box::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--green),var(--gold),var(--green),transparent);
+}
+.login-hero{text-align:center;margin-bottom:2rem;}
+.login-ornament{
+  font-family:'EB Garamond',serif;font-style:italic;
+  font-size:28px;color:var(--gold);display:block;margin-bottom:0.5rem;
+}
+.login-title{
+  font-family:'Libre Baskerville',serif;
+  font-size:22px;font-weight:400;color:var(--cream);
+}
+.login-sub{font-size:12px;color:var(--faint);margin-top:5px;}
+.login-field{margin-bottom:1rem;}
+.login-field label{
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--faint);display:block;margin-bottom:6px;
+}
+.login-field input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:10px;padding:12px 14px;font-family:'Lato',sans-serif;
+  font-size:14px;color:var(--cream);outline:none;transition:border-color 0.2s;
+}
+.login-field input:focus{border-color:var(--gold);}
+.login-error{
+  font-size:12px;color:var(--red);min-height:18px;
+  margin-bottom:1rem;text-align:center;
+}
+.btn-login{
+  width:100%;padding:13px;background:var(--green);color:#111;
+  border:none;border-radius:10px;font-family:'Lato',sans-serif;
+  font-size:14px;letter-spacing:0.5px;cursor:pointer;
+  transition:background 0.15s,transform 0.1s;
+  font-weight:700;
+}
+.btn-login:hover{background:#8fc066;}
+.btn-login:active{transform:scale(0.98);}
+.btn-login:disabled{opacity:0.6;cursor:not-allowed;}
+.login-footer{
+  text-align:center;font-size:11px;color:var(--faint);
+  margin-top:1.25rem;line-height:1.6;
+}
+.login-logout{
+  background:none;border:none;cursor:pointer;
+  font-size:11px;color:var(--faint);padding:0;
+  text-decoration:underline;transition:color 0.15s;
+}
+.login-logout:hover{color:var(--red);}
+.user-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;color:var(--faint);
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:99px;padding:3px 12px 3px 8px;
+  margin-left:8px;
+}
+.user-pill-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+
+
 @media(max-width:600px){
   .wrap{padding:2rem 1rem 5rem;}
   .summary{grid-template-columns:1fr 1fr;}
@@ -602,6 +673,44 @@ body::after{
 </head>
 <body>
 
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-hero">
+      <span class="login-ornament">✿</span>
+      <div class="login-title">Armando &amp; Betina</div>
+      <div class="login-sub">Portal de Planejamento · Acesso restrito</div>
+    </div>
+    <div id="login-view">
+      <div class="login-field">
+        <label>E-mail</label>
+        <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email"/>
+      </div>
+      <div class="login-field">
+        <label>Senha</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <button class="btn-login" id="btn-login" onclick="doLogin()">Entrar</button>
+      <div class="login-footer">
+        Apenas Armando e Betina têm acesso.<br>
+        Se esqueceu a senha, <span id="show-reset" style="color:var(--gold);cursor:pointer;text-decoration:underline" onclick="showReset()">clique aqui para redefinir</span>.
+      </div>
+    </div>
+    <div id="reset-view" style="display:none;">
+      <div class="login-field">
+        <label>E-mail para redefinição</label>
+        <input type="email" id="reset-email" placeholder="seu@email.com"/>
+      </div>
+      <div class="login-error" id="reset-error"></div>
+      <button class="btn-login" id="btn-reset" onclick="doReset()">Enviar link de redefinição</button>
+      <div class="login-footer" style="margin-top:1rem;">
+        <span style="color:var(--gold);cursor:pointer;text-decoration:underline" onclick="showLogin()">← Voltar ao login</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════ MODAL ═══════════════ -->
 <div class="modal-overlay" id="setup-modal">
   <div class="modal">
@@ -616,7 +725,7 @@ body::after{
     </div>
     <label>Cole aqui o Database URL</label>
     <input type="text" id="fb-url-input" placeholder="https://seu-projeto-default-rtdb.firebaseio.com"/>
-    <p class="modal-hint">⚠️ Lembre de ir em <strong>Regras</strong> no Firebase e trocar a expiração por <code>true</code> para não expirar em 30 dias.</p>
+    <p class="modal-hint">⚠️ Você também precisará da <strong>API Key</strong> do projeto: Configurações do projeto → Geral → Chave de API da Web (começa com <code>AIzaSy...</code>). Ela habilita o login seguro.</p>
     <div class="modal-error" id="modal-error"></div>
     <div class="modal-actions">
       <button class="btn-offline" onclick="useOffline()">Usar só offline</button>
@@ -646,6 +755,7 @@ body::after{
   <div class="sync-bar">
     <div class="sync-dot" id="sync-dot"></div>
     <span id="sync-label">Aguardando conexão...</span>
+    <span id="user-pill-wrap"></span>
   </div>
 
   <!-- SUMMARY CARDS -->
@@ -775,6 +885,174 @@ body::after{
 
 <script>
 /* ═══════════════════════════════════════════════
+   AUTH — Firebase Email/Password
+═══════════════════════════════════════════════ */
+let authApp = null;
+let currentUser = null;
+
+function getOrInitAuthApp(apiKey, projectId) {
+  try { return firebase.app('auth_app'); }
+  catch(e) {
+    return firebase.initializeApp({ apiKey, authDomain: projectId + '.firebaseapp.com' }, 'auth_app');
+  }
+}
+
+// Called once we have the FB URL — we extract projectId from it
+function initAuth(fbUrl) {
+  // fbUrl like https://meu-projeto-default-rtdb.firebaseio.com
+  const match = fbUrl.match(/https:\/\/([^-]+(?:-[^-]+)*)-default-rtdb\.firebaseio\.com/);
+  const projectId = match ? match[1] : fbUrl.replace('https://','').replace('-default-rtdb.firebaseio.com','');
+
+  // We need apiKey — store it alongside the URL or prompt once
+  const storedKey = localStorage.getItem('fb_apikey');
+  if (!storedKey) {
+    showApiKeyPrompt(fbUrl, projectId);
+    return;
+  }
+  bootAuth(storedKey, projectId, fbUrl);
+}
+
+function showApiKeyPrompt(fbUrl, projectId) {
+  const errEl = document.getElementById('modal-error');
+  const modal = document.getElementById('setup-modal');
+  modal.classList.remove('hidden');
+  document.getElementById('login-overlay').classList.add('hidden');
+
+  // Insert apiKey field into modal if not already there
+  if (!document.getElementById('fb-apikey-input')) {
+    const hint = document.querySelector('.modal-hint');
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <label style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--faint);display:block;margin-bottom:6px;margin-top:12px;">API Key do Firebase</label>
+      <input type="text" id="fb-apikey-input" placeholder="AIzaSy..." style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:11px 14px;font-family:'Lato',sans-serif;font-size:13px;color:var(--cream);outline:none;margin-bottom:6px;"/>
+      <p style="font-size:11px;color:var(--faint);margin-bottom:0;line-height:1.5;">Encontre em: Configurações do projeto → Geral → Chave de API da Web</p>
+    `;
+    hint.parentNode.insertBefore(wrap, hint);
+  }
+  if (fbUrl) document.getElementById('fb-url-input').value = fbUrl;
+}
+
+function bootAuth(apiKey, projectId, fbUrl) {
+  authApp = getOrInitAuthApp(apiKey, projectId);
+  const auth = firebase.auth(authApp);
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      document.getElementById('login-overlay').classList.add('hidden');
+      showUserPill(user.email);
+      // Now connect to DB
+      connectDB(fbUrl);
+    } else {
+      currentUser = null;
+      document.getElementById('login-overlay').classList.remove('hidden');
+      document.getElementById('user-pill-wrap').innerHTML = '';
+    }
+  });
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  const btn   = document.getElementById('btn-login');
+  errEl.textContent = '';
+  if (!email || !pass) { errEl.textContent = 'Preencha e-mail e senha.'; return; }
+  if (!authApp) { errEl.textContent = 'Configure a conexão Firebase primeiro.'; return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  firebase.auth(authApp).signInWithEmailAndPassword(email, pass)
+    .then(() => { btn.textContent = 'Entrar'; btn.disabled = false; })
+    .catch(err => {
+      btn.textContent = 'Entrar'; btn.disabled = false;
+      const msgs = {
+        'auth/user-not-found': 'E-mail não cadastrado.',
+        'auth/wrong-password': 'Senha incorreta.',
+        'auth/invalid-email': 'E-mail inválido.',
+        'auth/too-many-requests': 'Muitas tentativas. Aguarde um momento.',
+        'auth/invalid-credential': 'E-mail ou senha incorretos.',
+      };
+      errEl.textContent = msgs[err.code] || err.message;
+    });
+}
+
+function doReset() {
+  const email = document.getElementById('reset-email').value.trim();
+  const errEl = document.getElementById('reset-error');
+  const btn   = document.getElementById('btn-reset');
+  errEl.textContent = '';
+  if (!email) { errEl.textContent = 'Digite seu e-mail.'; return; }
+  if (!authApp) { errEl.textContent = 'Configure a conexão Firebase primeiro.'; return; }
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  firebase.auth(authApp).sendPasswordResetEmail(email)
+    .then(() => {
+      errEl.style.color = 'var(--green)';
+      errEl.textContent = 'E-mail enviado! Verifique sua caixa de entrada.';
+      btn.textContent = 'Enviado ✓';
+    })
+    .catch(err => {
+      btn.textContent = 'Enviar link de redefinição'; btn.disabled = false;
+      errEl.style.color = 'var(--red)';
+      errEl.textContent = err.message;
+    });
+}
+
+function doLogout() {
+  if (!authApp) return;
+  firebase.auth(authApp).signOut();
+}
+
+function showLogin() {
+  document.getElementById('login-view').style.display = '';
+  document.getElementById('reset-view').style.display = 'none';
+}
+function showReset() {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('reset-view').style.display = '';
+}
+
+function showUserPill(email) {
+  document.getElementById('user-pill-wrap').innerHTML =
+    `<span class="user-pill"><span class="user-pill-dot"></span>${email} <button class="login-logout" onclick="doLogout()" title="Sair">sair</button></span>`;
+}
+
+// Keyboard shortcut: Enter on login fields
+document.addEventListener('DOMContentLoaded', () => {
+  ['login-email','login-pass'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  });
+  const re = document.getElementById('reset-email');
+  if (re) re.addEventListener('keydown', e => { if(e.key==='Enter') doReset(); });
+
+  // Check if already configured and boot auth
+  const savedUrl = localStorage.getItem('fb_url');
+  const savedKey = localStorage.getItem('fb_apikey');
+  if (savedUrl && savedKey) {
+    const match = savedUrl.match(/https:\/\/([^-]+(?:-[^-]+)*)-default-rtdb\.firebaseio\.com/);
+    const projectId = match ? match[1] : savedUrl.replace('https://','').replace('-default-rtdb.firebaseio.com','');
+    bootAuth(savedKey, projectId, savedUrl);
+  }
+});
+
+// DB connection (separated from auth)
+function connectDB(url) {
+  try {
+    let app;
+    try { app = firebase.app('wedding'); }
+    catch(e) { app = firebase.initializeApp({ databaseURL: url }, 'wedding'); }
+    db = firebase.database(app);
+    fbRef = db.ref('dados_casamento');
+    startListening();
+  } catch(e) {
+    setSyncStatus('offline');
+    loadLocal();
+    renderAll();
+  }
+}
+
+</script>
+<script>
+/* ═══════════════════════════════════════════════
    DEFAULT DATA
 ═══════════════════════════════════════════════ */
 const DEFAULT = [
@@ -854,28 +1132,30 @@ function connectFirebase() {
   if (!url.startsWith('http')) url = 'https://' + url;
   if (!url.includes('firebaseio.com')) { errEl.textContent = 'URL inválida. Deve conter "firebaseio.com".'; return; }
   url = url.replace(/\/$/, '');
+
+  // Check for API Key
+  const apikeyEl = document.getElementById('fb-apikey-input');
+  const apiKey = apikeyEl ? apikeyEl.value.trim() : localStorage.getItem('fb_apikey');
+  if (!apiKey) {
+    // Show the apiKey field
+    if (!apikeyEl) showApiKeyPrompt(url, '');
+    else errEl.textContent = 'Cole a API Key do Firebase para habilitar o login seguro.';
+    return;
+  }
+
   const btn = document.getElementById('btn-connect');
   btn.textContent = 'Conectando...'; btn.disabled = true;
-  try {
-    let app;
-    try { app = firebase.app('wedding'); }
-    catch(e) { app = firebase.initializeApp({ databaseURL: url }, 'wedding'); }
-    db = firebase.database(app);
-    fbRef = db.ref('dados_casamento');
-    fbRef.child('_ping').set(Date.now())
-      .then(() => {
-        localStorage.setItem('fb_url', url);
-        closeModal(); startListening();
-        btn.textContent = 'Conectar e sincronizar'; btn.disabled = false;
-      })
-      .catch(err => {
-        errEl.textContent = 'Erro ao gravar: ' + err.message;
-        btn.textContent = 'Conectar e sincronizar'; btn.disabled = false;
-      });
-  } catch(e) {
-    errEl.textContent = 'Erro: ' + e.message;
-    btn.textContent = 'Conectar e sincronizar'; btn.disabled = false;
-  }
+
+  // Save credentials
+  localStorage.setItem('fb_url', url);
+  localStorage.setItem('fb_apikey', apiKey);
+
+  const match = url.match(/https:\/\/([^-]+(?:-[^-]+)*)-default-rtdb\.firebaseio\.com/);
+  const projectId = match ? match[1] : url.replace('https://','').replace('-default-rtdb.firebaseio.com','');
+
+  btn.textContent = 'Conectar e sincronizar'; btn.disabled = false;
+  closeModal();
+  bootAuth(apiKey, projectId, url);
 }
 
 function startListening() {
@@ -1436,26 +1716,6 @@ document.addEventListener('keydown', e => {
 ═══════════════════════════════════════════════ */
 renderAll();
 
-const savedUrl = localStorage.getItem('fb_url');
-if (savedUrl) {
-  document.getElementById('fb-url-input').value = savedUrl;
-  document.getElementById('setup-modal').classList.add('hidden');
-  try {
-    let app;
-    try { app = firebase.app('wedding'); }
-    catch(e) { app = firebase.initializeApp({ databaseURL: savedUrl }, 'wedding'); }
-    db = firebase.database(app);
-    fbRef = db.ref('dados_casamento');
-    startListening();
-  } catch(e) {
-    setSyncStatus('offline');
-    loadLocal();
-    renderAll();
-  }
-} else {
-  loadLocal();
-  renderAll();
-}
 </script>
 </body>
 </html>
